@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Заметки — Главная</title>
+  <style>
+    :root {
+      --bg: #0b1016;
+      --panel: #111826;
+      --panel-2: #0f1623;
+      --text: #e7edf5;
+      --muted: #9bb0c9;
+      --accent: #5b9eff;
+      --accent-2: #8b5bff;
+      --danger: #ff5b7a;
+      --success: #34d399;
+      --ring: rgba(91, 158, 255, .45);
+      --card-radius: 16px;
+      --btn-radius: 12px;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial;
+      background: radial-gradient(1300px 800px at 80% -10%, rgba(91,158,255,.08), transparent 60%),
+                  radial-gradient(1000px 700px at -10% 10%, rgba(139,91,255,.08), transparent 60%),
+                  var(--bg);
+      color: var(--text);
+    }
+    a { color: inherit; text-decoration: none; }
+    .container { max-width: 1100px; margin: 0 auto; padding: 24px; }
+
+    /* Header */
+    .topbar { display: flex; align-items: center; gap: 16px; }
+    .brand { display: flex; align-items: center; gap: 12px; font-weight: 700; }
+    .logo {
+      width: 36px; height: 36px; border-radius: 10px; background:
+        conic-gradient(from 200deg, var(--accent), var(--accent-2));
+      display: grid; place-items: center; color: white; font-size: 20px; box-shadow: var(--shadow);
+    }
+    .topbar-actions { margin-left: auto; display: flex; gap: 10px; }
+
+    /* Controls */
+    .controls { margin: 20px 0 14px; display: grid; grid-template-columns: 1fr auto auto; gap: 12px; }
+    .search { position: relative; }
+    .search input {
+      width: 100%; padding: 12px 42px 12px 42px; border-radius: var(--btn-radius);
+      border: 1px solid #22314a; background: var(--panel); color: var(--text);
+      outline: none; box-shadow: none; transition: box-shadow .2s, border-color .2s;
+    }
+    .search input:focus { border-color: var(--accent); box-shadow: 0 0 0 4px var(--ring); }
+    .search .icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); opacity: .7; }
+    .kbd { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); opacity: .6; font-size: 12px; border: 1px solid #2a3a57; border-radius: 6px; padding: 2px 6px; }
+
+    .select, .btn {
+      border: 1px solid #22314a; background: var(--panel); color: var(--text);
+      border-radius: var(--btn-radius); padding: 10px 12px; cursor: pointer;
+    }
+    .btn.primary { background: linear-gradient(90deg, var(--accent), var(--accent-2)); border: none; }
+    .btn.ghost { background: transparent; border: 1px dashed #2a3a57; }
+    .btn.danger { background: transparent; border: 1px solid #4b2630; color: #ff8ea2; }
+
+    /* Tags cloud */
+    .tags { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0 18px; }
+    .tag { font-size: 12px; padding: 6px 10px; border-radius: 999px; border: 1px solid #263654; color: var(--muted); cursor: pointer; }
+    .tag.active { color: #fff; background: #1b2841; border-color: #36517c; }
+
+    /* Grid */
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    @media (max-width: 960px) { .grid { grid-template-columns: repeat(2, 1fr);} }
+    @media (max-width: 640px) { .grid { grid-template-columns: 1fr; } .controls { grid-template-columns: 1fr; } }
+
+    .card { background: linear-gradient(180deg, var(--panel), var(--panel-2)); border: 1px solid #1d2a42; border-radius: var(--card-radius); padding: 16px; position: relative; box-shadow: var(--shadow); }
+    .card h3 { margin: 0 32px 8px 0; font-size: 18px; }
+    .card p { margin: 0 0 12px; color: var(--muted); line-height: 1.5; }
+    .card .meta { display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: var(--muted); }
+    .pin { position: absolute; right: 10px; top: 10px; border: 1px solid #33496f; border-radius: 10px; padding: 6px; background: #0e1523; cursor: pointer; }
+    .pin.active { background: #16223a; }
+    .note-color { position: absolute; left: 12px; top: -6px; width: 18px; height: 18px; border-radius: 50%; border: 2px solid #0b1016; }
+
+    .empty { text-align: center; padding: 80px 20px; border: 1px dashed #22314a; border-radius: var(--card-radius); background: rgba(17,24,38,.35); }
+    .empty .emoji { font-size: 42px; margin-bottom: 8px; }
+
+    /* Modal */
+    dialog { border: none; border-radius: 18px; padding: 0; background: var(--panel); color: var(--text); box-shadow: var(--shadow); width: min(680px, 92vw); }
+    dialog::backdrop { background: rgba(4,6,10,.7); backdrop-filter: blur(1px); }
+    .modal-head { padding: 16px 18px; border-bottom: 1px solid #22314a; display: flex; align-items: center; justify-content: space-between; }
+    .modal-body { padding: 18px; display: grid; gap: 12px; }
+    .row { display: grid; gap: 8px; }
+    label { font-size: 13px; color: var(--muted); }
+    input[type="text"], textarea { width: 100%; padding: 10px 12px; border-radius: 12px; border: 1px solid #22314a; background: #0e1523; color: var(--text); outline: none; }
+    textarea { min-height: 140px; resize: vertical; }
+    .modal-foot { display: flex; justify-content: space-between; gap: 8px; padding: 16px 18px; border-top: 1px solid #22314a; }
+    .colors { display: flex; gap: 8px; }
+    .swatch { width: 26px; height: 26px; border-radius: 50%; border: 2px solid #0b1016; cursor: pointer; outline: 2px solid transparent; }
+    .swatch.active { outline: 2px solid var(--accent); }
+
+    /* Helpers */
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="topbar" aria-label="Верхняя панель">
+      <div class="brand" aria-label="Логотип и название">
+        <div class="logo" aria-hidden="true">✦</div>
+        <div>
+          <div>Notes</div>
+          <small style="color: var(--muted);">Домашняя страница</small>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <button id="importBtn" class="btn ghost" title="Импортировать JSON">Импорт</button>
+        <button id="exportBtn" class="btn ghost" title="Экспортировать JSON">Экспорт</button>
+        <button id="newBtn" class="btn primary" title="Создать заметку">+ Новая заметка</button>
+      </div>
+    </header>
+
+    <section class="controls" aria-label="Фильтры и поиск">
+      <div class="search">
+        <span class="icon" aria-hidden="true">🔎</span>
+        <input id="searchInput" type="search" placeholder="Поиск по заголовку, содержимому и тегам…" autocomplete="off" />
+        <span class="kbd">Ctrl ⌘ K</span>
+      </div>
+      <select id="sortSelect" class="select" title="Сортировка">
+        <option value="pinned">Закреплённые сверху</option>
+        <option value="newest">Сначала новые</option>
+        <option value="oldest">Сначала старые</option>
+        <option value="az">А→Я</option>
+        <option value="za">Я→А</option>
+      </select>
+      <button id="clearFilters" class="btn" title="Сбросить фильтры">Сброс</button>
+    </section>
+
+    <section aria-label="Облако тегов">
+      <div id="tags" class="tags"></div>
+    </section>
+
+    <main id="grid" class="grid" aria-live="polite"></main>
+
+    <template id="card-tpl">
+      <article class="card" role="article" tabindex="0">
+        <span class="note-color" aria-hidden="true"></span>
+        <button class="pin" title="Закрепить/открепить">📌</button>
+        <h3></h3>
+        <p class="preview"></p>
+        <div class="tags-row tags"></div>
+        <div class="meta">
+          <span class="date"></span>
+          <div style="display:flex; gap:8px;">
+            <button class="btn" data-action="edit">Редактировать</button>
+            <button class="btn danger" data-action="delete">Удалить</button>
+          </div>
+        </div>
+      </article>
+    </template>
+
+    <div id="empty" class="empty" hidden>
+      <div class="emoji">🗒️</div>
+      <h3>Заметок пока нет</h3>
+      <p style="color: var(--muted);">Нажмите «Новая заметка» или импортируйте JSON-файл.</p>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <dialog id="noteDialog" aria-labelledby="dialogTitle">
+    <form method="dialog" id="noteForm">
+      <div class="modal-head">
+        <strong id="dialogTitle">Заметка</strong>
+        <button type="button" class="btn" id="closeDialog">Закрыть</button>
+      </div>
+      <div class="modal-body">
+        <div class="row">
+          <label for="title">Заголовок</label>
+          <input id="title" name="title" type="text" placeholder="Например: Идеи для урока" required />
+        </div>
+        <div class="row">
+          <label for="content">Содержимое</label>
+          <textarea id="content" name="content" placeholder="Текст заметки…"></textarea>
+        </div>
+        <div class="row">
+          <label for="tagsInput">Теги (через запятую)</label>
+          <input id="tagsInput" name="tags" type="text" placeholder="work, учеба, идеи" />
+        </div>
+        <div class="row">
+          <label>Цвет метки</label>
+          <div class="colors" id="colors"></div>
+          <input type="hidden" id="color" value="#5b9eff" />
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn danger" id="deleteInEdit" hidden>Удалить</button>
+        <div style="display:flex; gap:8px; margin-left:auto">
+          <button type="button" class="btn" id="saveDraft">Сохранить черновик</button>
+          <button type="submit" class="btn primary">Сохранить</button>
+        </div>
+      </div>
+    </form>
+  </dialog>
+
+  <input type="file" id="importFile" accept="application/json" hidden />
+
+  <script>
+  // --- Модель ---
+  const STORAGE_KEY = 'notes.v1';
+  let state = {
+    notes: [],
+    query: '',
+    tag: null,
+    sort: 'pinned',
+    editId: null,
+  };
+
+  const COLORS = ['#5b9eff','#8b5bff','#34d399','#f59e0b','#ef4444','#22d3ee','#f472b6','#a3e635'];
+
+  function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+
+  function load() {
+    try { state.notes = JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+    catch { state.notes = []; }
+  }
+  function save() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state.notes));
+  }
+
+  // --- Рендер ---
+  const grid = document.getElementById('grid');
+  const tpl = document.getElementById('card-tpl');
+  const empty = document.getElementById('empty');
+  const tagsWrap = document.getElementById('tags');
+
+  function render() {
+    const items = getVisibleNotes();
+    grid.innerHTML = '';
+    if (!items.length) {
+      empty.hidden = false;
+      return;
+    } else empty.hidden = true;
+
+    for (const note of items) {
+      const node = tpl.content.cloneNode(true);
+      const card = node.querySelector('.card');
+      card.dataset.id = note.id;
+      card.querySelector('h3').textContent = note.title || 'Без названия';
+      card.querySelector('.preview').textContent = (note.content || '').slice(0, 180);
+      card.querySelector('.date').textContent = new Date(note.updatedAt).toLocaleString();
+      const pinBtn = card.querySelector('.pin');
+      if (note.pinned) pinBtn.classList.add('active');
+      pinBtn.addEventListener('click', (e) => { e.stopPropagation(); togglePin(note.id); });
+      card.addEventListener('dblclick', () => openEditor(note.id));
+
+      // color
+      const colorEl = card.querySelector('.note-color');
+      colorEl.style.background = note.color || COLORS[0];
+
+      // actions
+      card.querySelector('[data-action="edit"]').addEventListener('click', () => openEditor(note.id));
+      card.querySelector('[data-action="delete"]').addEventListener('click', () => removeNote(note.id));
+
+      // tags row
+      const row = card.querySelector('.tags-row');
+      for (const t of (note.tags || [])) {
+        const span = document.createElement('span');
+        span.className = 'tag';
+        span.textContent = '#' + t;
+        span.title = 'Фильтровать по тегу ' + t;
+        span.addEventListener('click', () => { state.tag = t; updateTagCloud(); render(); });
+        row.appendChild(span);
+      }
+
+      grid.appendChild(node);
+    }
+  }
+
+  function getVisibleNotes() {
+    const { notes, query, tag, sort } = state;
+    const q = (query || '').trim().toLowerCase();
+
+    let filtered = notes.filter(n => {
+      const byTag = tag ? (n.tags || []).includes(tag) : true;
+      const text = (n.title + ' ' + (n.content || '') + ' ' + (n.tags || []).join(' ')).toLowerCase();
+      const byQuery = q ? text.includes(q) : true;
+      return byTag && byQuery;
+    });
+
+    const sorters = {
+      pinned: (a,b) => (b.pinned - a.pinned) || (b.updatedAt - a.updatedAt),
+      newest: (a,b) => b.updatedAt - a.updatedAt,
+      oldest: (a,b) => a.updatedAt - b.updatedAt,
+      az: (a,b) => (a.title||'').localeCompare(b.title||''),
+      za: (a,b) => (b.title||'').localeCompare(a.title||''),
+    };
+    filtered.sort(sorters[sort] || sorters.pinned);
+    return filtered;
+  }
+
+  function updateTagCloud() {
+    const counts = new Map();
+    for (const n of state.notes) for (const t of (n.tags||[])) counts.set(t, (counts.get(t)||0)+1);
+
+    tagsWrap.innerHTML = '';
+    const all = document.createElement('span');
+    all.className = 'tag' + (state.tag? '': ' active');
+    all.textContent = 'Все';
+    all.addEventListener('click', () => { state.tag = null; render(); updateTagCloud(); });
+    tagsWrap.appendChild(all);
+
+    [...counts.entries()].sort((a,b)=>b[1]-a[1]).forEach(([t,c]) => {
+      const el = document.createElement('span');
+      el.className = 'tag' + (state.tag===t? ' active': '');
+      el.textContent = '#' + t + ' · ' + c;
+      el.title = 'Показать заметки с тегом #' + t;
+      el.addEventListener('click', () => { state.tag = (state.tag===t? null : t); render(); updateTagCloud(); });
+      tagsWrap.appendChild(el);
+    });
+  }
+
+  // --- CRUD ---
+  function createNote(data) {
+    const now = Date.now();
+    const note = { id: uid(), title: data.title?.trim() || 'Без названия', content: data.content?.trim()||'',
+      tags: parseTags(data.tags), color: data.color || COLORS[0], pinned: false, createdAt: now, updatedAt: now };
+    state.notes.unshift(note); save(); updateTagCloud(); render();
+  }
+  function updateNote(id, data) {
+    const n = state.notes.find(n=>n.id===id); if (!n) return;
+    n.title = data.title?.trim() || n.title;
+    n.content = data.content ?? n.content;
+    n.tags = parseTags(data.tags);
+    n.color = data.color || n.color;
+    n.updatedAt = Date.now();
+    save(); updateTagCloud(); render();
+  }
+  function removeNote(id) {
+    state.notes = state.notes.filter(n=>n.id!==id); save(); updateTagCloud(); render();
+  }
+  function togglePin(id) {
+    const n = state.notes.find(n=>n.id===id); if (!n) return;
+    n.pinned = !n.pinned; n.updatedAt = Date.now(); save(); render();
+  }
+  const parseTags = (s) => (s||'').split(',').map(t=>t.trim()).filter(Boolean).map(t=>t.replace(/^#/,'').toLowerCase());
+
+  // --- Диалог ---
+  const dialog = document.getElementById('noteDialog');
+  const form = document.getElementById('noteForm');
+  const closeDialogBtn = document.getElementById('closeDialog');
+  const deleteInEdit = document.getElementById('deleteInEdit');
+
+  function openEditor(id=null) {
+    state.editId = id;
+    form.reset();
+    document.getElementById('color').value = COLORS[0];
+    [...document.querySelectorAll('.swatch')].forEach(s=>s.classList.remove('active'));
+    document.querySelector('.swatch[data-color="'+COLORS[0]+'"]').classList.add('active');
+
+    if (id) {
+      const n = state.notes.find(n=>n.id===id);
+      document.getElementById('title').value = n.title;
+      document.getElementById('content').value = n.content;
+      document.getElementById('tagsInput').value = (n.tags||[]).join(', ');
+      document.getElementById('color').value = n.color;
+      [...document.querySelectorAll('.swatch')].forEach(s=>s.classList.toggle('active', s.dataset.color===n.color));
+      deleteInEdit.hidden = false;
+    } else {
+      deleteInEdit.hidden = true;
+    }
+    dialog.showModal();
+  }
+
+  function closeEditor() { dialog.close(); state.editId=null; }
+
+  closeDialogBtn.addEventListener('click', closeEditor);
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const data = {
+      title: document.getElementById('title').value,
+      content: document.getElementById('content').value,
+      tags: document.getElementById('tagsInput').value,
+      color: document.getElementById('color').value,
+    };
+    if (state.editId) updateNote(state.editId, data); else createNote(data);
+    closeEditor();
+  });
+
+  document.getElementById('saveDraft').addEventListener('click', (e) => {
+    e.preventDefault();
+    const title = document.getElementById('title').value.trim();
+    if (!title) return alert('Введите заголовок');
+    const data = {
+      title,
+      content: document.getElementById('content').value,
+      tags: document.getElementById('tagsInput').value,
+      color: document.getElementById('color').value,
+    };
+    if (state.editId) updateNote(state.editId, data); else createNote(data);
+    alert('Черновик сохранён');
+  });
+
+  deleteInEdit.addEventListener('click', () => {
+    if (state.editId && confirm('Удалить заметку?')) { removeNote(state.editId); closeEditor(); }
+  });
+
+  // --- Контролы ---
+  const searchInput = document.getElementById('searchInput');
+  let tId = 0;
+  searchInput.addEventListener('input', () => { clearTimeout(tId); tId = setTimeout(() => { state.query = searchInput.value; render(); }, 200); });
+  document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase()==='k') {
+      e.preventDefault(); searchInput.focus();
+    }
+  });
+
+  const sortSelect = document.getElementById('sortSelect');
+  sortSelect.addEventListener('change', () => { state.sort = sortSelect.value; render(); });
+
+  document.getElementById('clearFilters').addEventListener('click', () => {
+    state.query=''; state.tag=null; searchInput.value=''; updateTagCloud(); render();
+  });
+
+  document.getElementById('newBtn').addEventListener('click', () => openEditor());
+
+  // --- Цвета в модалке ---
+  const colorsWrap = document.getElementById('colors');
+  COLORS.forEach(c => {
+    const b = document.createElement('button'); b.type='button'; b.className='swatch'; b.style.background=c; b.dataset.color=c;
+    b.addEventListener('click', ()=> { document.getElementById('color').value=c; [...colorsWrap.children].forEach(x=>x.classList.remove('active')); b.classList.add('active'); });
+    colorsWrap.appendChild(b);
+  });
+  colorsWrap.firstChild.classList.add('active');
+
+  // --- Импорт/Экспорт ---
+  const exportBtn = document.getElementById('exportBtn');
+  exportBtn.addEventListener('click', () => {
+    const blob = new Blob([JSON.stringify(state.notes, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href=url; a.download='notes-export.json'; a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  const importBtn = document.getElementById('importBtn');
+  const importFile = document.getElementById('importFile');
+  importBtn.addEventListener('click', () => importFile.click());
+  importFile.addEventListener('change', async () => {
+    const file = importFile.files[0]; if (!file) return;
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+      if (!Array.isArray(data)) throw new Error('Неверный формат');
+      // простая валидация
+      const cleaned = data.map(n => ({
+        id: n.id || uid(),
+        title: String(n.title||'Без названия'),
+        content: String(n.content||''),
+        tags: Array.isArray(n.tags) ? n.tags.map(t=>String(t)) : [],
+        color: n.color || COLORS[0],
+        pinned: !!n.pinned,
+        createdAt: Number(n.createdAt||Date.now()),
+        updatedAt: Number(n.updatedAt||Date.now()),
+      }));
+      state.notes = cleaned; save(); updateTagCloud(); render();
+    } catch (e) {
+      alert('Не удалось импортировать: ' + e.message);
+    } finally {
+      importFile.value = '';
+    }
+  });
+
+  // --- Инициализация ---
+  load();
+  updateTagCloud();
+  render();
+
+  // демо-данные если пусто
+  if (!state.notes.length) {
+    state.notes = [
+      { id: uid(), title: 'Планы на лекцию по Django views', content: 'HTTP-методы, маршрутизация, path converters, reverse() и имена маршрутов…', tags: ['django','python','лекции'], color: '#8b5bff', pinned: true, createdAt: Date.now()-86400000, updatedAt: Date.now()-3600_000 },
+      { id: uid(), title: 'Идеи по FastAPI проекту', content: 'Подключить Celery + beat, расписать пайплайн логирования, healthchecks…', tags: ['fastapi','celery'], color: '#5b9eff', pinned: false, createdAt: Date.now()-7200_000, updatedAt: Date.now()-7200_000 },
+      { id: uid(), title: 'Подготовка к тестам по Python', content: 'Собрать 100 вопросов: база, Django, Docker, SQL, алгоритмы…', tags: ['python','интервью'], color: '#34d399', pinned: false, createdAt: Date.now()-5400_000, updatedAt: Date.now()-5400_000 },
+    ];
+    save(); updateTagCloud(); render();
+  }
+  </script>
+</body>
+</html>
